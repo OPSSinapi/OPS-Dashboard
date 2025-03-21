@@ -192,27 +192,6 @@
             color: var(--primary-color);
         }
         
-        /* Dashboard Label */
-        .dashboard-label {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            background-color: rgba(44, 62, 80, 0.8);
-            color: white;
-            padding: 8px 15px;
-            border-radius: var(--radius);
-            font-size: 0.9rem;
-            font-weight: 500;
-            opacity: 0.8;
-            z-index: 998;
-            transition: opacity 0.3s ease;
-            box-shadow: var(--shadow);
-        }
-        
-        .dashboard-label:hover {
-            opacity: 1;
-        }
-        
         /* Responsive Adjustments */
         @media (max-width: 768px) {
             .nav-button {
@@ -228,19 +207,11 @@
                 right: 15px;
                 max-width: 250px;
             }
-            
-            .dashboard-label {
-                font-size: 0.8rem;
-                padding: 6px 12px;
-            }
         }
     </style>
 </head>
 <body>
-    <!-- Dashboard Label -->
-    <div class="dashboard-label" id="dashboardLabel">
-        Production Dashboard
-    </div>
+    <!-- Removed dashboard label as requested -->
     
     <!-- Navigation Button -->
     <button class="nav-button" id="navButton">
@@ -291,7 +262,7 @@
             const menuItems = document.querySelectorAll('.menu-item');
             const frames = document.querySelectorAll('.dashboard-frame');
             const loading = document.getElementById('loading');
-            const dashboardLabel = document.getElementById('dashboardLabel');
+            // Dashboard label removed as requested
             
             // Initial loading state handling
             setTimeout(() => {
@@ -329,8 +300,7 @@
                     menuItems.forEach(m => m.classList.remove('active'));
                     item.classList.add('active');
                     
-                    // Update dashboard label
-                    dashboardLabel.textContent = dashboardName;
+                    // Dashboard label updating removed
                     
                     // Update active frame
                     frames.forEach(frame => {
@@ -354,19 +324,7 @@
                 });
             });
             
-            // Auto-hide dashboard label after 5 seconds
-            setTimeout(() => {
-                dashboardLabel.style.opacity = '0.3';
-            }, 5000);
-            
-            // Show label fully when hovering
-            dashboardLabel.addEventListener('mouseenter', () => {
-                dashboardLabel.style.opacity = '1';
-            });
-            
-            dashboardLabel.addEventListener('mouseleave', () => {
-                dashboardLabel.style.opacity = '0.3';
-            });
+            // Dashboard label event handlers removed
             
             // Handle messages from iframes if needed
             window.addEventListener('message', function(event) {
