@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sinapi Manufacturing Dashboards</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -15,6 +16,7 @@
             --warning-color: #f39c12;
             --danger-color: #c0392b;
             --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --popup-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
             --radius: 6px;
         }
         
@@ -26,91 +28,128 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--light-color);
-            color: var(--primary-color);
-            line-height: 1.6;
             height: 100vh;
-            display: flex;
-            flex-direction: column;
             overflow: hidden;
         }
         
-        header {
+        /* Nav Button */
+        .nav-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
             background-color: var(--primary-color);
             color: white;
-            padding: 1rem;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        /* Popup Menu */
+        .popup-menu {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background-color: white;
+            border-radius: var(--radius);
+            box-shadow: var(--popup-shadow);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            overflow: hidden;
+            max-width: 300px;
+        }
+        
+        .popup-menu.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .popup-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 15px;
+            font-weight: 500;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: var(--shadow);
-            z-index: 100;
         }
         
-        .logo-title {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .logo {
-            font-size: 1.8rem;
-        }
-        
-        h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-        
-        .nav-tabs {
-            display: flex;
-            background-color: var(--dark-color);
-            padding: 0.5rem 1rem;
-            box-shadow: var(--shadow);
-            z-index: 99;
-        }
-        
-        .tab {
-            padding: 0.5rem 1.5rem;
-            margin-right: 0.5rem;
-            background-color: var(--dark-color);
-            color: var(--light-color);
-            border: none;
-            border-radius: var(--radius) var(--radius) 0 0;
-            cursor: pointer;
+        .popup-header h3 {
             font-size: 1rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            margin: 0;
+        }
+        
+        .close-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0;
             display: flex;
             align-items: center;
-            gap: 8px;
         }
         
-        .tab:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+        .menu-items {
+            padding: 10px 0;
         }
         
-        .tab.active {
-            background-color: var(--light-color);
-            color: var(--primary-color);
-            border-bottom: 3px solid var(--secondary-color);
-        }
-        
-        .tab-icon {
-            font-size: 1.2rem;
-        }
-        
-        .dashboard-container {
-            flex: 1;
-            overflow: hidden;
+        .menu-item {
+            padding: 10px 15px;
             display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            color: var(--dark-color);
+            text-decoration: none;
+        }
+        
+        .menu-item:hover {
+            background-color: var(--light-color);
+        }
+        
+        .menu-item.active {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left: 3px solid var(--secondary-color);
+            padding-left: 12px;
+        }
+        
+        .menu-icon {
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Dashboard Container */
+        .dashboard-container {
+            width: 100%;
+            height: 100vh;
             position: relative;
         }
         
         .dashboard-frame {
-            flex: 1;
-            border: none;
             width: 100%;
             height: 100%;
+            border: none;
+            position: absolute;
+            top: 0;
+            left: 0;
             display: none;
         }
         
@@ -118,8 +157,9 @@
             display: block;
         }
         
+        /* Loading Indicator */
         .loading {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
@@ -129,7 +169,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 10;
+            z-index: 1001;
         }
         
         .spinner {
@@ -152,64 +192,86 @@
             color: var(--primary-color);
         }
         
-        footer {
-            background-color: var(--primary-color);
+        /* Dashboard Label */
+        .dashboard-label {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background-color: rgba(44, 62, 80, 0.8);
             color: white;
-            padding: 0.5rem 1rem;
-            text-align: center;
-            font-size: 0.8rem;
+            padding: 8px 15px;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            font-weight: 500;
+            opacity: 0.8;
+            z-index: 998;
+            transition: opacity 0.3s ease;
+            box-shadow: var(--shadow);
         }
         
-        /* Responsive adjustments */
+        .dashboard-label:hover {
+            opacity: 1;
+        }
+        
+        /* Responsive Adjustments */
         @media (max-width: 768px) {
-            .nav-tabs {
-                overflow-x: auto;
-                white-space: nowrap;
-                padding: 0.5rem;
-            }
-            
-            .tab {
-                padding: 0.5rem 1rem;
-                margin-right: 0.25rem;
-                font-size: 0.9rem;
-            }
-            
-            .tab-icon {
-                font-size: 1rem;
-            }
-            
-            h1 {
+            .nav-button {
+                width: 50px;
+                height: 50px;
                 font-size: 1.2rem;
+                bottom: 15px;
+                right: 15px;
+            }
+            
+            .popup-menu {
+                bottom: 75px;
+                right: 15px;
+                max-width: 250px;
+            }
+            
+            .dashboard-label {
+                font-size: 0.8rem;
+                padding: 6px 12px;
             }
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <header>
-        <div class="logo-title">
-            <div class="logo">
-                <i class="fas fa-industry"></i>
-            </div>
-            <h1>Sinapi Manufacturing Dashboards</h1>
-        </div>
-    </header>
-    
-    <div class="nav-tabs">
-        <button class="tab active" data-target="production-dashboard">
-            <i class="fas fa-chart-line tab-icon"></i>
-            <span>Production</span>
-        </button>
-        <button class="tab" data-target="rejects-dashboard">
-            <i class="fas fa-exclamation-triangle tab-icon"></i>
-            <span>Rejects</span>
-        </button>
-        <button class="tab" data-target="operations-dashboard">
-            <i class="fas fa-cogs tab-icon"></i>
-            <span>Operations</span>
-        </button>
+    <!-- Dashboard Label -->
+    <div class="dashboard-label" id="dashboardLabel">
+        Production Dashboard
     </div>
     
+    <!-- Navigation Button -->
+    <button class="nav-button" id="navButton">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <!-- Popup Navigation Menu -->
+    <div class="popup-menu" id="popupMenu">
+        <div class="popup-header">
+            <h3>Sinapi Dashboards</h3>
+            <button class="close-button" id="closeMenu">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="menu-items">
+            <a class="menu-item active" data-target="production-dashboard">
+                <i class="fas fa-chart-line menu-icon"></i>
+                <span>Production Dashboard</span>
+            </a>
+            <a class="menu-item" data-target="rejects-dashboard">
+                <i class="fas fa-exclamation-triangle menu-icon"></i>
+                <span>Rejects Dashboard</span>
+            </a>
+            <a class="menu-item" data-target="operations-dashboard">
+                <i class="fas fa-cogs menu-icon"></i>
+                <span>Operations Dashboard</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Dashboard Container -->
     <div class="dashboard-container">
         <div id="loading" class="loading">
             <div class="spinner"></div>
@@ -221,32 +283,54 @@
         <iframe id="operations-dashboard" class="dashboard-frame" src="https://opssinapi.github.io/Secondary-Production/"></iframe>
     </div>
     
-    <footer>
-        <p>&copy; 2025 Sinapi Manufacturing. All rights reserved.</p>
-    </footer>
-    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const tabs = document.querySelectorAll('.tab');
+            const navButton = document.getElementById('navButton');
+            const popupMenu = document.getElementById('popupMenu');
+            const closeMenu = document.getElementById('closeMenu');
+            const menuItems = document.querySelectorAll('.menu-item');
             const frames = document.querySelectorAll('.dashboard-frame');
             const loading = document.getElementById('loading');
+            const dashboardLabel = document.getElementById('dashboardLabel');
             
             // Initial loading state handling
             setTimeout(() => {
                 loading.style.display = 'none';
             }, 2000);
             
-            // Tab switching functionality
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const targetId = tab.getAttribute('data-target');
+            // Toggle navigation menu
+            navButton.addEventListener('click', () => {
+                popupMenu.classList.toggle('active');
+            });
+            
+            // Close menu when clicking close button
+            closeMenu.addEventListener('click', () => {
+                popupMenu.classList.remove('active');
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', (event) => {
+                if (!navButton.contains(event.target) && 
+                    !popupMenu.contains(event.target)) {
+                    popupMenu.classList.remove('active');
+                }
+            });
+            
+            // Dashboard switching functionality
+            menuItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const targetId = item.getAttribute('data-target');
+                    const dashboardName = item.querySelector('span').textContent;
                     
                     // Show loading animation
                     loading.style.display = 'flex';
                     
-                    // Update active tab
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
+                    // Update active menu item
+                    menuItems.forEach(m => m.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    // Update dashboard label
+                    dashboardLabel.textContent = dashboardName;
                     
                     // Update active frame
                     frames.forEach(frame => {
@@ -257,20 +341,35 @@
                             // Hide loading after the iframe loads or after a timeout
                             const timeout = setTimeout(() => {
                                 loading.style.display = 'none';
-                            }, 3000);
+                                popupMenu.classList.remove('active'); // Close menu after selection
+                            }, 2000);
                             
                             frame.onload = () => {
                                 clearTimeout(timeout);
                                 loading.style.display = 'none';
+                                popupMenu.classList.remove('active'); // Close menu after selection
                             };
                         }
                     });
                 });
             });
             
-            // Iframe message passing for potential future integration
+            // Auto-hide dashboard label after 5 seconds
+            setTimeout(() => {
+                dashboardLabel.style.opacity = '0.3';
+            }, 5000);
+            
+            // Show label fully when hovering
+            dashboardLabel.addEventListener('mouseenter', () => {
+                dashboardLabel.style.opacity = '1';
+            });
+            
+            dashboardLabel.addEventListener('mouseleave', () => {
+                dashboardLabel.style.opacity = '0.3';
+            });
+            
+            // Handle messages from iframes if needed
             window.addEventListener('message', function(event) {
-                // Handle messages from the iframes if needed
                 console.log('Message received from iframe:', event.data);
             });
         });
