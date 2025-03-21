@@ -262,12 +262,65 @@
             const menuItems = document.querySelectorAll('.menu-item');
             const frames = document.querySelectorAll('.dashboard-frame');
             const loading = document.getElementById('loading');
-            // Dashboard label removed as requested
             
-            // Initial loading state handling
-            setTimeout(() => {
-                loading.style.display = 'none';
-            }, 2000);
+            // Function to switch dashboards
+            function switchToDashboard(targetId) {
+                // Find the menu item for this dashboard
+                const menuItem = document.querySelector(`.menu-item[data-target="${targetId}"]`);
+                if (!menuItem) return false;
+                
+                // Show loading animation
+                loading.style.display = 'flex';
+                
+                // Update active menu item
+                menuItems.forEach(m => m.classList.remove('active'));
+                menuItem.classList.add('active');
+                
+                // Save to localStorage for persistence
+                localStorage.setItem('selectedDashboard', targetId);
+                
+                // Update active frame
+                frames.forEach(frame => {
+                    frame.classList.remove('active');
+                    if (frame.id === targetId) {
+                        frame.classList.add('active');
+                        
+                        // Hide loading after the iframe loads or after a timeout
+                        const timeout = setTimeout(() => {
+                            loading.style.display = 'none';
+                            popupMenu.classList.remove('active'); // Close menu after selection
+                        }, 2000);
+                        
+                        frame.onload = () => {
+                            clearTimeout(timeout);
+                            loading.style.display = 'none';
+                            popupMenu.classList.remove('active'); // Close menu after selection
+                        };
+                    }
+                });
+                
+                return true;
+            }
+            
+            // Check localStorage for saved dashboard preference
+            const savedDashboard = localStorage.getItem('selectedDashboard');
+            if (savedDashboard) {
+                // Switch to the saved dashboard
+                if (switchToDashboard(savedDashboard)) {
+                    // If successful, don't need additional loading handling
+                    console.log(`Restored dashboard: ${savedDashboard}`);
+                } else {
+                    // Fallback to default if saved dashboard isn't available
+                    setTimeout(() => {
+                        loading.style.display = 'none';
+                    }, 2000);
+                }
+            } else {
+                // No saved preference, use default (first dashboard)
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                }, 2000);
+            }
             
             // Toggle navigation menu
             navButton.addEventListener('click', () => {
@@ -291,40 +344,9 @@
             menuItems.forEach(item => {
                 item.addEventListener('click', () => {
                     const targetId = item.getAttribute('data-target');
-                    const dashboardName = item.querySelector('span').textContent;
-                    
-                    // Show loading animation
-                    loading.style.display = 'flex';
-                    
-                    // Update active menu item
-                    menuItems.forEach(m => m.classList.remove('active'));
-                    item.classList.add('active');
-                    
-                    // Dashboard label updating removed
-                    
-                    // Update active frame
-                    frames.forEach(frame => {
-                        frame.classList.remove('active');
-                        if (frame.id === targetId) {
-                            frame.classList.add('active');
-                            
-                            // Hide loading after the iframe loads or after a timeout
-                            const timeout = setTimeout(() => {
-                                loading.style.display = 'none';
-                                popupMenu.classList.remove('active'); // Close menu after selection
-                            }, 2000);
-                            
-                            frame.onload = () => {
-                                clearTimeout(timeout);
-                                loading.style.display = 'none';
-                                popupMenu.classList.remove('active'); // Close menu after selection
-                            };
-                        }
-                    });
+                    switchToDashboard(targetId);
                 });
             });
-            
-            // Dashboard label event handlers removed
             
             // Handle messages from iframes if needed
             window.addEventListener('message', function(event) {
